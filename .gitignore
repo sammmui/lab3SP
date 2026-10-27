@@ -1,0 +1,7 @@
+/parser
+/parser.exe
+/parser.tab.c
+/parser.tab.h
+/lex.yy.c
+/ast.json
+/generated.py
