@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>AST Viewer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    svg { border: 1px solid #ccc; }
+    .node circle { fill: white; stroke: steelblue; stroke-width: 1.5px; }
+    .node text { font-size: 12px; }
+    .link { fill: none; stroke: #777; stroke-width: 1.5px; }
+  </style>
+</head>
+<body>
+  <h2>Візуалізація AST</h2>
+  <svg width="1400" height="900"></svg>
+
+  <script>
+    fetch("ast.json")
+      .then(response => {
+        if (!response.ok) throw new Error("ast.json не знайдено");
+        return response.json();
+      })
+      .then(data => {
+        const root = d3.hierarchy(
+          data,
+          node => node.children && node.children.length ? node.children : null
+        );
+
+        const svg = d3.select("svg");
+        const width = +svg.attr("width");
+        const height = +svg.attr("height");
+        const g = svg.append("g").attr("transform", "translate(120,40)");
+
+        d3.tree().size([height - 80, width - 200])(root);
+
+        group.selectAll(".link")
+          .data(root.links())
+          .enter()
+          .append("path")
+          .attr("class", "link")
+          .attr("d", d3.linkHorizontal()
+            .x(d => d.y)
+            .y(d => d.x));
+
+        const nodes = group.selectAll(".node")
+          .data(root.descendants())
+          .enter()
+          .append("g")
+          .attr("class", "node")
+          .attr("transform", d => `translate(${d.y},${d.x})`);
+
+        nodes.append("circle").attr("r", 6);
+
+        nodes.append("text")
+          .attr("dy", 4)
+          .attr("x", d => d.children ? -10 : 10)
+          .style("text-anchor", d => d.children ? "end" : "start")
+          .text(d => {
+            const value = d.data.val == null ? "" : `: ${d.data.val}`;
+            return d.data.name + value;
+          });
+      })
+      .catch(error => {
+        document.body.append(
+          "Не вдалося завантажити ast.json. Запусти локальний HTTP-сервер. " +
+          error.message
+        );
+      });
+  </script>
+</body>
+</html>
